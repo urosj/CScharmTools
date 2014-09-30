@@ -1,0 +1,76 @@
+theblues: 
+  services: 
+    mongodb: 
+      charm: "cs:trusty/mongodb-3"
+      num_units: 1
+      annotations: 
+        "gui-x": "567.386962890625"
+        "gui-y": "638.0321044921875"
+    charmstore: 
+      charm: "local:trusty/charmstore-1"
+      num_units: 1
+      options: 
+        source: v4
+      expose: true
+      annotations: 
+        "gui-x": "561.2808268550828"
+        "gui-y": "370.2903137207031"
+    nagios: 
+      charm: "cs:precise/nagios-10"
+      num_units: 1
+      expose: true
+      annotations: 
+        "gui-x": "895.7856160642601"
+        "gui-y": "380.3335949392461"
+    nrpe: 
+      charm: "cs:~rcj/trusty/nrpe-4"
+      num_units: 0
+      expose: true
+      annotations: 
+        "gui-x": "906.7306192873024"
+        "gui-y": "654.5271679372929"
+    apache2: 
+      charm: "cs:trusty/apache2-4"
+      num_units: 1
+      options: 
+        vhost_http_template: "PFZpcnR1YWxIb3N0IF9kZWZhdWx0Xzo4MD4KICBQcm94eVByZXNlcnZlSG9zdCBPbgogIFByb3h5\nUGFzcyAvIGJhbGFuY2VyOi8vY2hhcm1zdG9yZS8KICBQcm94eVBhc3NSZXZlcnNlIC8gYmFsYW5j\nZXI6Ly9jaGFybXN0b3JlLwo8L1ZpcnR1YWxIb3N0Pgo="
+      expose: true
+      annotations: 
+        "gui-x": "557.3644062992141"
+        "gui-y": "78.35482788085938"
+    haproxy: 
+      charm: "cs:precise/haproxy-35"
+      num_units: 1
+      annotations: 
+        "gui-x": "233.98852334003686"
+        "gui-y": "77.82775149630083"
+    elasticsearch: 
+      charm: "cs:trusty/elasticsearch-6"
+      num_units: 1
+      expose: true
+      annotations: 
+        "gui-x": "253.26737695187614"
+        "gui-y": "626.6119183032226"
+    kibana: 
+      charm: "cs:precise/kibana-6"
+      num_units: 1
+      expose: true
+      annotations: 
+        "gui-x": "-96.26941123027564"
+        "gui-y": "630.1503222970821"
+  relations: 
+    - - "mongodb:database"
+      - "charmstore:mongodb"
+    - - "nagios:nagios"
+      - "charmstore:juju-info"
+    - - "nrpe:local-monitors"
+      - "charmstore:local-monitors"
+    - - "nrpe:monitors"
+      - "nagios:monitors"
+    - - "charmstore:website"
+      - "apache2:balancer"
+    - - "haproxy:reverseproxy"
+      - "charmstore:website"
+    - - "kibana:rest"
+      - "elasticsearch:client"
+  series: trusty
