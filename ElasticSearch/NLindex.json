@@ -1,0 +1,73 @@
+{
+ "charmstore" : {  
+   "settings" : {
+      "analysis" : {
+         "analyzer" : {
+            "edge_n_gram_search" : {
+               "tokenizer" : "xoom_tokenizer",
+               "filter" : ["lowercase"]
+            },
+            "edge_n_gram_index" : {
+               "tokenizer" : "xoom_tokenizer",
+               "filter" : ["lowercase","edge_ngram"]
+            },
+            "keyword":{
+                "type":"custom",
+                "tokenizer":"keyword_tokenizer",
+                "filter":"lowercase"
+            }
+         },
+         "tokenizer" : {
+            "xoom_tokenizer" : {
+               "pattern" : "[^\\p{L}\\d]+",
+               "type" : "pattern"
+            },
+            "keyword_tokenizer":{
+                "type":"keyword",
+                "buffer_size":"256"
+            }
+         },
+         "filter" : {
+            "edge_ngram" : {
+               "side" : "front",
+               "max_gram" : 20,
+               "min_gram" : 1,
+               "type" : "edgeNGram"
+            }
+         }
+      }
+   },
+    "mappings": {
+        "_default_": {
+            "_all" : {
+                "search_analyzer" : "edge_n_gram_search",
+                "index_analyzer" : "edge_n_gram_index"
+            },
+            "dynamic_templates": [
+                {
+                    "analyzed_template": {
+                        "match": "*",
+                        "mapping": {
+                            "type": "multi_field",
+                            "fields" : {
+                                "{name}" : {
+                                    "type" : "string",
+                                    "index" : "analyzed",
+                                    "search_analyzer" : "keyword",
+                                    "index_analyzer" : "keyword"
+                                },
+                                "ngram" : {
+                                    "type" : "string",
+                                    "index" : "analyzed",
+                                    "search_analyzer" : "edge_n_gram_search",
+                                    "index_analyzer" : "edge_n_gram_index"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+  }
+}
