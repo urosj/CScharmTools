@@ -1,87 +1,91 @@
 Search queries
 
-Accessing nested structure of the Entity is done using ".", you can use multiple dots in sequence.
+Note that JSON serialization uses cased json keys syntax. Use newentity.json mapping schema.
+
+Accessing nested structure of the Entity is done using ".".
 
 ---
 Search for whole charm name:
 
-http get localhost:9200/charmstore/entity/_search?q=charmmeta.name:'mediawiki'
+http get localhost:9200/charmstore/_search?q=entity.CharmMeta.Name:mediawiki
 
 ---
 Search for only a part of the name
 - note that n-grams seem not to work currently
 Prefix (simulating autocompletion search)
 
-http get localhost:9200/charmstore/entity/_search?q=charmmeta.name:'me*'
+http get localhost:9200/charmstore/_search?q=entity.CharmMeta.Name:me*
 
 ---
 Substring, finding anything related in a name to a given substring (note that prefix and substring are needed just because we don't have n-grams yet).
 
-http get localhost:9200/charmstore/entity/_search?q=charmmeta.name:*wiki*
+http get localhost:9200/charmstore/_search?q=entity.CharmMeta.Name:*wiki*
 
 ---
 Bundle name
 
 There is no bundle name, we only have "id" part. To get all bundles, use:
-_search?q=entity.id:'cs\:bundle\/*'
+_search?q=entity.URL:'cs\:bundle\/*'
 
 To get a bundle by name, use: (if substring, use *$substring*)
-http get localhost:9200/charmstore/_search?q=entity.id:'cs\:bundle\/media*'
+http get localhost:9200/charmstore/_search?q=entity.URL:'cs\:bundle\/media*'
 
 ---
 Tags
 
 For charms, the single tag query is:
-_search?q=entity.charmmeta.categories:'$tag'
+_search?q=entity.CharmMeta.Categories:'$tag'
 
-http get localhost:9200/charmstore/_search?q=entity.charmmeta.categories:'applic*'
+http get localhost:9200/charmstore/_search?q=entity.CharmMeta.Categories:'applic*'
 
 For multiple, the syntax is simple, just use q=( term1 AND term2 ...).   
 
-http get http://localhost:9200/charmstore/_search?q='(entity.charmmeta.categories:applic*%20AND%20entity.charmmeta.categories:wik*)'
+http get http://localhost:9200/charmstore/_search?q='(entity.CharmMeta.Categories:applic* AND entity.CharmMeta.Categories:serv*)'
 
 ---
 Owner
-_search?q='entity.id:cs\:\~jonhdoe*'
+_search?q='entity.URL:cs\:\~jonhdoe*'
 
-http get http://localhost:9200/charmstore/_search?q='entity.id:cs\:\~john*'
+http get http://localhost:9200/charmstore/_search?q='entity.URL:cs\:\~charmer*'
 
 ---
 Provides
 
-We have two entry points in the schema for this, but the entity.charmmeta.provides.interface seems not to work :( We use the "charmprovidedinterfaces" instead.
+We have two entry points in the schema for this, but the entity.charmmeta.provides.interface seems not to work :( We use the "CharmProvidedInterfaces" instead.
 
-_search?q='entity.charmprovidedinterfaces:http'
+_search?q='entity.CharmProvidedInterfaces:http'
 
 use AND here as well to search for multiple ones.
 
-http get http://localhost:9200/charmstore/_search?q='entity.charmprovidedinterfaces:http'
+http get http://localhost:9200/charmstore/_search?q='entity.CharmProvidedInterfaces:http'
 
 ---
 Requires
 
-We have two entry points in the schema for this, but the entity.charmmeta.requires.interface seems not to work :( We use the "charmrequiredinterfaces" instead.
+We have two entry points in the schema for this, but the entity.charmmeta.requires.interface seems not to work :( We use the "CharmRequiredInterfaces" instead.
 
-_search?q='entity.charmrequiredinterfaces:mysql'
+_search?q='entity.CharmRequiredInterfaces:mysql'
 
 use AND to search for multiple ones
 
-http get http://localhost:9200/charmstore/_search?q='(entity.charmrequiredinterfaces:mysql AND entity.charmrequiredinterfaces:mem*)'
+http get http://localhost:9200/charmstore/_search?q='(entity.CharmRequiredInterfaces:mysql AND entity.CharmRequiredInterfaces:mem*)'
 
 ---
 Series
 
-_search?q='entity.id:\:SERIES\/'
+_search?q='entity.URL:\:SERIES\/'
 
 Search for charms that provide interface and the charm being of specific series: 
-http get http://localhost:9200/charmstore/_search?q='(entity.charmprovidedinterfaces:http AND entity.id:*\:precise\/*)'
+
+http get http://localhost:9200/charmstore/_search?q='(entity.CharmProvidedInterfaces:http AND entity.URL:*\:precise\/*)'
+
 
 ---
 Descritpion
 
-_search?q='entity.charmmeta.description:*KEYWORD*'
+_search?q='entity.CharmMeta.Description:*KEYWORD*'
 
-http get http://localhost:9200/charmstore/_search?q='entity.charmmeta.description:*engine*'
+http get http://localhost:9200/charmstore/_search?q='entity.CharmMeta.Description:*engine*'
 
 ---
 Full text search:
