@@ -1,0 +1,170 @@
+{
+  "id": "cs:~johndoe/bundle/anotherbundle-0",
+  "baseurl": "cs:anotherbundle",
+  "blobhash": "ea041e5a66c6be55e152a206e4766c991882e04c525c12a5c20b2a9fc235ea3ebd4c41a8929c428f0f6e535d9266d2e1",
+  "size": 28434,
+  "blobname": "/charms/bundle_anotherbundle_541172f2035a040277000170",
+  "uploadtime": 1410429682348,
+  "charmmeta": null,
+  "charmconfig": null,
+  "charmactions": null,
+  "charmprovidedinterfaces": [
+
+  ],
+  "charmrequiredinterfaces": [
+
+  ],
+  "bundledata": {
+    "services": {
+      "mysql": {
+        "charm": "precise/mysql",
+        "numunits": 1,
+        "options": {
+          "ha-bindiface": "eth0",
+          "vip_cidr": 24,
+          "block-size": 5,
+          "flavor": "distro",
+          "query-cache-type": "OFF",
+          "tuning-level": "safest",
+          "query-cache-size": -1,
+          "rbd-name": "mysql1",
+          "vip_iface": "eth0",
+          "binlog-format": "MIXED",
+          "dataset-size": "80%",
+          "ha-mcastport": 5411,
+          "max-connections": -1,
+          "preferred-storage-engine": "InnoDB"
+        },
+        "annotations": {
+          "gui-x": "926",
+          "gui-y": "123"
+        }
+      },
+      "mysql-slave": {
+        "charm": "precise/mysql",
+        "numunits": 1,
+        "options": {
+          "binlog-format": "MIXED",
+          "block-size": 5,
+          "dataset-size": "80%",
+          "max-connections": -1,
+          "preferred-storage-engine": "InnoDB",
+          "ha-bindiface": "eth0",
+          "ha-mcastport": 5411,
+          "rbd-name": "mysql1",
+          "vip_iface": "eth0",
+          "flavor": "distro",
+          "query-cache-type": "OFF",
+          "tuning-level": "safest",
+          "vip_cidr": 24,
+          "query-cache-size": -1
+        },
+        "annotations": {
+          "gui-x": "619",
+          "gui-y": "124"
+        }
+      },
+      "mediawiki": {
+        "charm": "precise/mediawiki",
+        "numunits": 1,
+        "options": {
+          "skin": "vector",
+          "debug": false,
+          "name": "Please set name of wiki"
+        },
+        "annotations": {
+          "gui-x": "618",
+          "gui-y": "-128"
+        }
+      },
+      "memcached": {
+        "charm": "precise/memcached",
+        "numunits": 1,
+        "options": {
+          "request-limit": -1,
+          "threads": -1,
+          "disable-cas": "no",
+          "disable-large-pages": "no",
+          "factor": 1.25,
+          "udp-port": 0,
+          "connection-limit": 1024,
+          "nagios_context": "juju",
+          "tcp-port": 11211,
+          "extra-options": "",
+          "min-item-size": -1,
+          "size": 768,
+          "slab-page-size": -1,
+          "disable-auto-cleanup": "no"
+        },
+        "annotations": {
+          "gui-x": "926",
+          "gui-y": "-125"
+        }
+      },
+      "haproxy": {
+        "charm": "precise/haproxy",
+        "numunits": 1,
+        "options": {
+          "global_spread_checks": 0,
+          "monitoring_allowed_cidr": "127.0.0.1/32",
+          "monitoring_port": 10000,
+          "monitoring_username": "haproxy",
+          "package_status": "install",
+          "services": "- service_name: haproxy_service\n  service_host: \"0.0.0.0\"\n  service_port: 80\n  service_options: [balance leastconn]\n  server_options: maxconn 100\n",
+          "global_group": "haproxy",
+          "global_log": "127.0.0.1 local0, 127.0.0.1 local1 notice",
+          "default_timeouts": "queue 20000, client 50000, connect 5000, server 50000",
+          "enable_monitoring": false,
+          "global_maxconn": 4096,
+          "sysctl": "",
+          "default_mode": "http",
+          "default_options": "httplog, dontlognull",
+          "monitoring_password": "changeme",
+          "default_log": "global",
+          "default_retries": 3,
+          "global_user": "haproxy",
+          "monitoring_stats_refresh": 3,
+          "nagios_context": "juju",
+          "global_debug": false,
+          "global_quiet": false
+        },
+        "annotations": {
+          "gui-x": "619",
+          "gui-y": "-406"
+        }
+      }
+    },
+    "series": "precise",
+    "relations": [
+      [
+        "mediawiki:cache",
+        "memcached:cache"
+      ],
+      [
+        "haproxy:reverseproxy",
+        "mediawiki:website"
+      ],
+      [
+        "mysql-slave:slave",
+        "mysql:master"
+      ],
+      [
+        "mediawiki:slave",
+        "mysql-slave:db"
+      ]
+    ]
+  },
+  "bundlereadme": "# A scalable MediaWiki Bundle\n\nThis bundle deploys Mediawiki, memcached, MySQL, and an haproxy. It requires a\nminimum of 5 units. The mediawiki charm is placed behind the proxy so that you\ncan point DNS at the proxy and then scale the mediawiki unit up and down.\n\n## Usage\n\nAll you should do after deployment is expose haproxy, you can do this via the\nGUI or via the CLI:\n\n    juju expose haproxy\n\nTo scale out mediawiki itself:\n\n    juju add-unit mediawiki\n\nThere's no need to configure memcached, it is included in this bundle to use\nmediawiki already. The MySQL database is set up in a master->slave\nconfiguration so you can scale the database as well with:\n\n    juju add-unit mysql-slave\n",
+  "bundlecharms": [
+    "cs:haproxy",
+    "cs:precise/mysql",
+    "cs:mysql",
+    "cs:precise/mediawiki",
+    "cs:mediawiki",
+    "cs:precise/memcached",
+    "cs:memcached",
+    "cs:precise/haproxy"
+  ],
+  "bundlemachinecount": 5,
+  "bundleunitcount": 5
+}

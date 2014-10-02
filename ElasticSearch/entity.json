@@ -5,12 +5,11 @@
       "id" : {
         "type" : "string",
         "index" : "not_analyzed",
-        "omit_norms" : true,
         "index_options" : "docs"
       },
       "baseurl" : {
         "type" : "string",
-        "omit_norms" : true,
+        "index": "not_analyzed",
         "index_options" : "docs"
       },
       "blobhash" : {

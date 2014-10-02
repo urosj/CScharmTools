@@ -48,7 +48,9 @@
     },
     "format": 1,
     "categories": [
-      "applications"
+      "applications",
+      "wiki",
+      "information"
     ]
   },
   "charmconfig": {
