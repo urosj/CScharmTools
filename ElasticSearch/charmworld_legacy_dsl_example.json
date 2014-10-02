@@ -1,0 +1,101 @@
+{
+    "query": {
+        "filtered": {
+            "filter": {
+                "and": [
+                    {
+                        "or": [
+                            {
+                                "and": [
+                                    {
+                                        "missing": {
+                                            "field": "data.store_data.errors"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": {
+                                    "value": "bundle"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "query": {
+                "custom_filters_score": {
+                    "filters": [
+                        {
+                            "boost": 10,
+                            "filter": {
+                                "not": {
+                                    "prefix": {
+                                        "store_url": "cs:~"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "query": {
+                        "bool": {
+                            "should": [
+                                {
+                                    "filtered": {
+                                        "filter": {
+                                            "type": {
+                                                "value": "bundle"
+                                            }
+                                        },
+                                        "query": {
+                                            "query_string": {
+                                                "fields": [
+                                                    "data.description^3",
+                                                    "data.title",
+                                                    "data.data.services.*.charm",
+                                                    "data.name^10",
+                                                    "data.basket_name^5",
+                                                    "data.owner",
+                                                    "data.data.series",
+                                                    "ngrams"
+                                                ],
+                                                "query": "mysql"
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "filtered": {
+                                        "filter": {
+                                            "type": {
+                                                "value": "charm"
+                                            }
+                                        },
+                                        "query": {
+                                            "query_string": {
+                                                "fields": [
+                                                    "data.description^3",
+                                                    "data.relations",
+                                                    "data.summary^5",
+                                                    "data.config.options.description",
+                                                    "data.services",
+                                                    "data.name^10",
+                                                    "data.owner",
+                                                    "data.series",
+                                                    "ngrams",
+                                                    "requires.*",
+                                                    "provides.*"
+                                                ],
+                                                "query": "mysql"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
