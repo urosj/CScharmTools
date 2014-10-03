@@ -51,10 +51,56 @@
             "dynamic" : "false",
             "properties" : {
               "name" : {
-                "type" : "string",
-                "index" : "not_analyzed",
-                "omit_norms" : true,
-                "index_options" : "docs"
+                "type" : "multi_field",
+                "fields" : {
+                  "name" : {
+                    "type" : "string",
+                    "index" : "not_analyzed",
+                    "omit_norms" : true,
+                    "index_options" : "docs"
+                  },
+                  "ngrams" : {
+                    "type" : "string",
+                    "analyzer" : "n3_20grams",
+                    "include_in_all" : false
+                  }
+                }
+              },
+              "summary" : {
+                "type" : "string"
+              },
+              "description" : {
+                "type" : "string"
+              },
+              "provides" : {
+                "dynamic" : "false",
+                "properties" : {
+                  "name" : {
+                    "type" : "string",
+                    "index" : "not_analyzed",
+                    "omit_norms" : true,
+                    "index_options" : "docs"
+                  },
+                  "role" : {
+                    "type" : "string",
+                    "index" : "not_analyzed",
+                    "omit_norms" : true,
+                    "index_options" : "docs"
+                  },
+                  "interface" : {
+                    "type" : "string",
+                    "index" : "not_analyzed",
+                    "omit_norms" : true,
+                    "index_options" : "docs"
+                  },
+                  "scope" : {
+                    "type" : "string",
+                    "index" : "not_analyzed",
+                    "omit_norms" : true,
+                    "index_options" : "docs"
+                  }
+                }
+>>>>>>> edb21e18788249bb43dbd6cf537f7f94403e0f6f
               },
               "role" : {
                 "type" : "string",

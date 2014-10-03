@@ -1,0 +1,10 @@
+{
+    "query": {
+        "match": {
+            "charmmeta.name.ngrams": {
+                "query": "media",
+                "analyzer": "standard"
+            }
+        }
+    }
+}
