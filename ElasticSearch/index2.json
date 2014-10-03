@@ -4,7 +4,7 @@
         "analysis": {
             "filter": {
                 "n3_20grams_filter": {
-                    "type":     "edge_ngram",
+                    "type":     "nGram",
                     "min_gram": 3,
                     "max_gram": 20
                 }

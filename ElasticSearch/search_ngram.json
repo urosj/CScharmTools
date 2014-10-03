@@ -1,7 +1,7 @@
 {
     "query": {
         "match": {
-            "charmmeta.name.ngrams": {
+            "CharmMeta.Name.ngrams": {
                 "query": "media",
                 "analyzer": "standard"
             }
