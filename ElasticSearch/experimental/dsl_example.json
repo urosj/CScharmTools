@@ -1,0 +1,16 @@
+{
+	"query": {
+	    "query_string": {
+	       "fields": [
+	           "entity.CharmMeta.Description^3",
+	           "entity.CharmMeta.Summary^5",
+	           "entity.CharmConfig.Options.Description",
+	           "entity.CharmMeta.Name^10",
+	           "entity.CharmMeta.Name.ngrams",
+	           "entity.CharmProvidedInterface",
+	           "entity.CharmRequiredInterfaces"
+	       ],
+	       "query": "mysql"
+	   }
+	}
+}
