@@ -9,12 +9,12 @@
     "analysis": {
       "filter": {
         "n3_20grams_filter": {
-          "type": "ngram",
+          "type": "edge_ngram",
           "min_gram": 3,
           "max_gram": 20
         }
       },
-      "analyser": {
+      "analyzer": {
         "n3_20grams": {
           "type": "custom",
           "tokenizer": "standard",

@@ -36,7 +36,7 @@
               },
               "ngrams" : {
                 "type" : "string",
-                "analyser" : "n3_20grams",
+                "analyzer" : "n3_20grams",
                 "include_in_all" : false
               }
             }
