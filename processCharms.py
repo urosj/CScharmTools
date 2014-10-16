@@ -14,13 +14,14 @@ def getAllCharmRepositories():
 		"mysql": "lp:~charmers/charms/precise/mysql/trunk",
 		"apache2": "lp:~charmers/charms/precise/apache2/trunk",
 		"cassandra": "lp:~charmers/charms/precise/cassandra/trunk",
-		#"elasticsearch": "lp:~charmers/charms/precise/elasticsearch/trunk",
+		"elasticsearch": "lp:~charmers/charms/precise/elasticsearch/trunk",
 		"drupal6": "lp:~lynxman/charms/precise/drupal6/trunk",
-		#"jujugui": "lp:~juju-gui-charmers/charms/precise/juju-gui/trunk",
+		"jujugui": "lp:~juju-gui-charmers/charms/precise/juju-gui/trunk",
 		"memcached": "lp:~charmers/charms/precise/memcached/trunk",
 		"rabbitmqserver": "lp:~charmers/charms/precise/rabbitmq-server/trunk",
 		"solr": "lp:~charmers/charms/precise/solr/trunk",
 		"tomcat7": "lp:~charmers/charms/precise/tomcat7/trunk",
+		"websphere-libery": "lp:~ibm-demo/charms/trusty/websphere-liberty/trunk",
 		"wordpress": "lp:~charmers/charms/precise/wordpress/trunk",
 		"zookeeper": "lp:~charmers/charms/precise/zookeeper/trunk"
 	}
