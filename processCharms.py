@@ -83,7 +83,7 @@ def uploadAllCharms(zips, CS_URL):
 		uploadCharm(zipName, CS_URL)
 
 def getCharmArchiveSize(charmName, CS_URL):
-	r = requests.get("http://"+CS_URL+"/v4/"+charmName+"/meta/archive-size")
+	r = requests.get("http://"+CS_URL+"/v4/~csqaprocess"+charmName+"/meta/archive-size")
 	if(r.status_code == 200):
 		json_data = json.loads(r.content)
 		size = json_data[u'Size']
