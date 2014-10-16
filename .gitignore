@@ -1,0 +1,16 @@
+charmZips/apache2.zip
+charmZips/cassandra.zip
+charmZips/drupal6.zip
+charmZips/elasticsearch.zip
+charmZips/haproxy.zip
+charmZips/jujugui.zip
+charmZips/mediawiki.zip
+charmZips/mediawikibundle.zip
+charmZips/memcached.zip
+charmZips/mysql.zip
+charmZips/rabbitmqserver.zip
+charmZips/solr.zip
+charmZips/tomcat7.zip
+charmZips/websphere-libery.zip
+charmZips/wordpress.zip
+charmZips/zookeeper.zip
