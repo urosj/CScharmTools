@@ -6,6 +6,9 @@ from fnmatch import fnmatch
 from subprocess import call
 import requests
 import json
+import random
+import bisect
+import threading
 
 def getAllCharmRepositories():
 	repos = {
@@ -27,9 +30,29 @@ def getAllCharmRepositories():
 	}
 	return repos
 
+def getCharmProbabilities():
+	probs = {
+		"mediawiki.zip": 10,
+		"haproxy.zip": 10,
+		"mysql.zip": 10,
+		"apache2.zip": 10,
+		"cassandra.zip": 10,
+		"elasticsearch.zip": 3,
+		"drupal6.zip": 10,
+		#"jujugui.zip": 3,
+		"memcached.zip": 10,
+		"rabbitmqserver.zip": 10,
+		"solr.zip": 10,
+		"tomcat7.zip": 10,
+		#"websphere-libery.zip": 1,
+		"wordpress.zip": 10,
+		"zookeeper.zip": 10
+	}
+	return probs
+
 def getAllBundleRepositories():
 	bundles = {
-		"mediawikibundle": "lp:~charmers/charms/bundles/mediawiki-scalable/bundle"
+		#"mediawikibundle": "lp:~charmers/charms/bundles/mediawiki-scalable/bundle"
 	}
 	return bundles
 
@@ -37,11 +60,13 @@ def processCharmRepository(name, repository):
 	cmd = "./getCharmAndZip.sh " + name + " " + repository
 	print cmd
 	ret_code = call(cmd, shell=True)	
+	return ret_code
 
 def processBundleRepository(name, repository):
         cmd = "./getBundleAndZip.sh " + name + " " + repository
         print cmd
         ret_code = call(cmd, shell=True)
+        return ret_code
 
 def printHelp():
 	print "missing parameters"
@@ -62,7 +87,7 @@ def prepareNameForZip(zipName):
 	params = []
 	name = zipName.replace("./charmZips/", "")
 	name = name.replace(".zip", "")
-	params.append("precise/"+name)
+	params.append("~csqaprocess1/precise/"+name)
 
 	charmZip = zipName.replace("./", "")
 	params.append(charmZip)
@@ -75,6 +100,7 @@ def uploadCharm(zipName, CS_URL):
 	cmd = "./upload-charm.sh "+CS_URL+" "+params[0]+" "+params[1]
 	print cmd
 	ret_code = call(cmd, shell=True)
+	return ret_code
 
 
 def uploadAllCharms(zips, CS_URL):
@@ -83,7 +109,9 @@ def uploadAllCharms(zips, CS_URL):
 		uploadCharm(zipName, CS_URL)
 
 def getCharmArchiveSize(charmName, CS_URL):
-	r = requests.get("http://"+CS_URL+"/v4/~csqaprocess"+charmName+"/meta/archive-size")
+	url = "http://"+CS_URL+"/v4/"+charmName+"/meta/archive-size"
+	#print url
+	r = requests.get(url)
 	if(r.status_code == 200):
 		json_data = json.loads(r.content)
 		size = json_data[u'Size']
@@ -103,6 +131,133 @@ def compareZipAndUploadedCharmSize(zips, CS_URL):
 			print params[0] + " is properly uploaded"
 		else:
 			print params[0] + " size on disk is " + sizeOnDisk + " in store is " + sizeInCharmstore
+
+def prepareProbabilityDistribution(probs):
+	sum = 0
+	itemPoints = []
+	itemNames = []
+	items = probs.keys()
+	for i in items:
+		sum += probs[i]
+		itemPoints.append(sum)
+		itemNames.append(i)
+	return itemPoints, itemNames
+
+def getRandomItem(breakpoints, items):
+    score = random.random() * breakpoints[-1]
+    i = bisect.bisect(breakpoints, score)
+    return items[i]
+
+class UploadThread(threading.Thread):
+	def __init__(self, zipName, CS_URL):
+		super(UploadThread, self).__init__()
+		self.zipName = zipName
+		self.csUrl = CS_URL
+
+	def run(self):
+		print "starting upload task for ", self.zipName
+		uploadCharm(self.zipName, self.csUrl)
+		print "done uploading task for ", self.zipName
+
+def uploadMonkeyTasks(zips, CS_URL):
+	print "starting upload monkeys"
+	probs = getCharmProbabilities()
+	#print probs
+	probsDistribution, items = prepareProbabilityDistribution(probs)
+	#print probsDistribution
+	#print items
+
+	for _ in range(10):
+		selected = []
+		threads = []
+		for _ in range(20):
+			# select a charm
+			print "select random"
+			randZip = getRandomItem(probsDistribution, items)
+			selected.append(randZip)
+			print "selected: ", randZip
+			#print "complete set: ", selected
+
+			thread = UploadThread(randZip, CS_URL)
+			threads.append(thread)
+
+		for thread in threads:
+			thread.start()
+
+		for thread in threads:
+			thread.join()
+
+class DownloadThread(threading.Thread):
+	def __init__(self, charmName, CS_URL, fileName):
+			super(DownloadThread, self).__init__()
+			self.charmName = charmName
+			self.csURL = CS_URL
+			self.fileName = fileName
+
+	def run(self):
+		print "starting download task for ", self.charmName
+		cmd = "http get "+self.csURL+"/v4/"+self.charmName+"/archive > "+self.fileName
+		print cmd
+		ret_code = call(cmd, shell=True)
+		return ret_code		
+
+def checkDownloadSize(downloadCounter, CS_URL):
+	errorCount = 0
+	errorList = []
+	for charm in downloadCounter.keys():
+		print charm
+		size = getCharmArchiveSize(charm+"-0", CS_URL)
+		print size
+		last = downloadCounter[charm]
+		zipFileBase = charm.replace("~csqaprocess1/precise/", "")
+		zipFileBase = "./temp/" + zipFileBase
+		for i in range(last):
+			zipFile = zipFileBase + "-" + str(i+1) + ".zip"
+			sizeOnDisk = getFileSize(zipFile)
+			if sizeOnDisk != size:
+				print zipFile + " is not properly downloaded"
+				errorCount = errorCount + 1
+				errorList.append(zipFile)
+	return errorCount, errorList
+
+
+def downloadMonkeyTasks(CS_URL):
+	probs = getCharmProbabilities()
+	probsDistribution, items = prepareProbabilityDistribution(probs)
+
+	downloadCounter = {}
+
+	for _ in range(20):
+		tasks = []
+		for _ in range(50):
+			randZip = getRandomItem(probsDistribution, items)
+			charmName = randZip.replace(".zip", "")
+			charmName = "~csqaprocess1/precise/"+charmName
+			#print charmName
+			if not charmName in downloadCounter:
+				downloadCounter[charmName] = 1
+			else:
+				downloadCounter[charmName] += 1
+			taskParams = [charmName, "./temp/"+randZip.replace(".zip","")+"-"+str(downloadCounter[charmName])+".zip"]
+			tasks.append(taskParams)
+
+		#print tasks
+		#print downloadCounter
+
+		threads = []
+		for task in tasks:
+			thread = DownloadThread(task[0], CS_URL, task[1])
+			threads.append(thread)
+
+		for thread in threads:
+			thread.start()
+
+		for thread in threads:
+			thread.join()
+
+	errorCount, errorList = checkDownloadSize(downloadCounter, CS_URL)
+	print errorList
+	print "num errors while downloading: " + str(errorCount)
 
 
 def main():
@@ -134,6 +289,10 @@ def main():
 			uploadAllCharms(zips, CS_URL)
 		elif ACTION == "checkSize":
 			compareZipAndUploadedCharmSize(zips, CS_URL)
+		elif ACTION == "uploadmonkey":
+			uploadMonkeyTasks(zips, CS_URL)
+		elif ACTION == "downloadmonkey":
+			downloadMonkeyTasks(CS_URL)
 		else:
 			print "unknown command"
 			printHelp()
