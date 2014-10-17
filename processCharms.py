@@ -20,13 +20,13 @@ def getAllCharmRepositories():
 		"elasticsearch": "lp:~charmers/charms/precise/elasticsearch/trunk",
 		"drupal6": "lp:~lynxman/charms/precise/drupal6/trunk",
 		"jujugui": "lp:~juju-gui-charmers/charms/precise/juju-gui/trunk",
-		"memcached": "lp:~charmers/charms/precise/memcached/trunk",
-		"rabbitmqserver": "lp:~charmers/charms/precise/rabbitmq-server/trunk",
-		"solr": "lp:~charmers/charms/precise/solr/trunk",
-		"tomcat7": "lp:~charmers/charms/precise/tomcat7/trunk",
-		"websphere-libery": "lp:~ibm-demo/charms/trusty/websphere-liberty/trunk",
-		"wordpress": "lp:~charmers/charms/precise/wordpress/trunk",
-		"zookeeper": "lp:~charmers/charms/precise/zookeeper/trunk"
+		#"memcached": "lp:~charmers/charms/precise/memcached/trunk",
+		#"rabbitmqserver": "lp:~charmers/charms/precise/rabbitmq-server/trunk",
+		#"solr": "lp:~charmers/charms/precise/solr/trunk",
+		#"tomcat7": "lp:~charmers/charms/precise/tomcat7/trunk",
+		##"websphere-libery": "lp:~ibm-demo/charms/trusty/websphere-liberty/trunk",
+		#"wordpress": "lp:~charmers/charms/precise/wordpress/trunk",
+		#"zookeeper": "lp:~charmers/charms/precise/zookeeper/trunk"
 	}
 	return repos
 
@@ -71,8 +71,10 @@ def processBundleRepository(name, repository):
 def printHelp():
 	print "missing parameters"
 	print "usage: " + sys.argv[0] + " ACTION + CS_URL"
-	print "- ACTION: download, upload, checkSize"
+	print "- ACTION: download, upload, checkSize, "
+	print " 	uploadmonkey, downloadmonkey, revisionmonkey"
 	print "- CS_URL is the URL:PORT of the charmstore"
+	print "- revisionmonkey needs two additional parameters: minRevision and maxRevision"
 
 def getAllCharmZips():
 	zips = []
@@ -159,6 +161,19 @@ class UploadThread(threading.Thread):
 		uploadCharm(self.zipName, self.csUrl)
 		print "done uploading task for ", self.zipName
 
+class RevisionUploadThread(threading.Thread):
+	def __init__(self, zipName, CS_URL):
+		super(RevisionUploadThread, self).__init__()
+		self.zipName = zipName
+		self.csUrl = CS_URL
+
+	def run(self):
+		print "zipname: ", self.zipName[0]
+		cmd = "./upload-revision.sh "+self.csUrl+" "+self.zipName[1]+" "+self.zipName[0]
+		print cmd
+		ret_code = call(cmd, shell=True)
+
+
 def uploadMonkeyTasks(zips, CS_URL):
 	print "starting upload monkeys"
 	probs = getCharmProbabilities()
@@ -186,6 +201,50 @@ def uploadMonkeyTasks(zips, CS_URL):
 
 		for thread in threads:
 			thread.join()
+
+def generateCharmRevisions(zipPrefix, minR, maxR):
+	revisions = []
+	for r in range(minR, maxR):
+		cmd = "./makeCharmRevision.sh " + zipPrefix + " " + str(r) + " " + str((r / 2)*2)
+		print cmd
+		ret_code = call(cmd, shell=True)
+		revisions.append(zipPrefix+"-"+str(r))
+	return revisions
+
+def uploadCharmNameFromRevName(revName):
+	splits = revName.split("-")
+	name = "~csqaprocess1/precise/"+splits[0]
+	return name
+
+def generateRevisionsForCharms(minR, maxR, CS_URL):
+	repos = getAllCharmRepositories()
+	charms = repos.keys()
+	revisions = []
+	for charm in charms:
+		cr = generateCharmRevisions(charm, minR, maxR)
+		for r in cr:
+			revisions.append(r)
+	#print revisions
+	zips = []
+	for rev in revisions:
+		zipname = "./charmRevisions/"+rev+".zip"
+		name = uploadCharmNameFromRevName(rev)
+		zips.append([zipname, name])
+	print zips
+
+	threads = []
+
+	for charm in zips:
+		thread = RevisionUploadThread(charm, CS_URL)
+		threads.append(thread)
+
+	for thread in threads:
+		thread.start()
+
+	for thread in threads:
+		thread.join()
+
+
 
 class DownloadThread(threading.Thread):
 	def __init__(self, charmName, CS_URL, fileName):
@@ -293,6 +352,11 @@ def main():
 			uploadMonkeyTasks(zips, CS_URL)
 		elif ACTION == "downloadmonkey":
 			downloadMonkeyTasks(CS_URL)
+		elif ACTION == "revisionmonkey":
+			if len(sys.argv) < 5:
+				printHelp()
+				sys.exit()
+			generateRevisionsForCharms(int(sys.argv[3]), int(sys.argv[4]), CS_URL)
 		else:
 			print "unknown command"
 			printHelp()
