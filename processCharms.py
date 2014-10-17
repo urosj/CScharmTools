@@ -234,6 +234,7 @@ def generateRevisionsForCharms(minR, maxR, CS_URL):
 
 	threads = []
 
+	# TODO: needs to be broken in chunks
 	for charm in zips:
 		thread = RevisionUploadThread(charm, CS_URL)
 		threads.append(thread)
