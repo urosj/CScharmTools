@@ -6,6 +6,9 @@ from fnmatch import fnmatch
 from subprocess import call
 import requests
 import json
+import random
+import bisect
+import threading
 
 def getAllCharmRepositories():
 	repos = {
@@ -27,6 +30,26 @@ def getAllCharmRepositories():
 	}
 	return repos
 
+def getCharmProbabilities():
+	probs = {
+		"mediawiki.zip": 10,
+		"haproxy.zip": 10,
+		"mysql.zip": 10,
+		"apache2.zip": 10,
+		"cassandra.zip": 10,
+		#"elasticsearch.zip": 3,
+		"drupal6.zip": 10,
+		#"jujugui.zip": 3,
+		"memcached.zip": 10,
+		"rabbitmqserver.zip": 10,
+		"solr.zip": 10,
+		"tomcat7.zip": 10,
+		#"websphere-libery.zip": 1,
+		#"wordpress.zip": 10,
+		"zookeeper.zip": 10
+	}
+	return probs
+
 def getAllBundleRepositories():
 	bundles = {
 		"mediawikibundle": "lp:~charmers/charms/bundles/mediawiki-scalable/bundle"
@@ -37,11 +60,13 @@ def processCharmRepository(name, repository):
 	cmd = "./getCharmAndZip.sh " + name + " " + repository
 	print cmd
 	ret_code = call(cmd, shell=True)	
+	return ret_code
 
 def processBundleRepository(name, repository):
         cmd = "./getBundleAndZip.sh " + name + " " + repository
         print cmd
         ret_code = call(cmd, shell=True)
+        return ret_code
 
 def printHelp():
 	print "missing parameters"
@@ -75,6 +100,7 @@ def uploadCharm(zipName, CS_URL):
 	cmd = "./upload-charm.sh "+CS_URL+" "+params[0]+" "+params[1]
 	print cmd
 	ret_code = call(cmd, shell=True)
+	return ret_code
 
 
 def uploadAllCharms(zips, CS_URL):
@@ -104,6 +130,60 @@ def compareZipAndUploadedCharmSize(zips, CS_URL):
 		else:
 			print params[0] + " size on disk is " + sizeOnDisk + " in store is " + sizeInCharmstore
 
+def prepareProbabilityDistribution(probs):
+	sum = 0
+	itemPoints = []
+	itemNames = []
+	items = probs.keys()
+	for i in items:
+		sum += probs[i]
+		itemPoints.append(sum)
+		itemNames.append(i)
+	return itemPoints, itemNames
+
+def getRandomItem(breakpoints, items):
+    score = random.random() * breakpoints[-1]
+    i = bisect.bisect(breakpoints, score)
+    return items[i]
+
+class UploadThread(threading.Thread):
+	def __init__(self, zipName, CS_URL):
+		super(UploadThread, self).__init__()
+		self.zipName = zipName
+		self.csUrl = CS_URL
+
+	def run(self):
+		print "starting upload task for ", self.zipName
+		uploadCharm(self.zipName, self.csUrl)
+		print "done uploading task for ", self.zipName
+
+def uploadMonkeyTasks(zips, CS_URL):
+	print "starting upload monkeys"
+	probs = getCharmProbabilities()
+	#print probs
+	probsDistribution, items = prepareProbabilityDistribution(probs)
+	#print probsDistribution
+	#print items
+
+	for _ in range(1):
+		selected = []
+		threads = []
+		for _ in range(200):
+			# select a charm
+			print "select random"
+			randZip = getRandomItem(probsDistribution, items)
+			selected.append(randZip)
+			print "selected: ", randZip
+			#print "complete set: ", selected
+
+			thread = UploadThread(randZip, CS_URL)
+			threads.append(thread)
+
+		for thread in threads:
+			thread.start()
+
+		for thread in threads:
+			thread.join()
 
 def main():
 	if len(sys.argv) < 2:
@@ -134,6 +214,8 @@ def main():
 			uploadAllCharms(zips, CS_URL)
 		elif ACTION == "checkSize":
 			compareZipAndUploadedCharmSize(zips, CS_URL)
+		elif ACTION == "uploadmonkey":
+			uploadMonkeyTasks(zips, CS_URL)
 		else:
 			print "unknown command"
 			printHelp()
