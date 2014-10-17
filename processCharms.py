@@ -37,7 +37,7 @@ def getCharmProbabilities():
 		"mysql.zip": 10,
 		"apache2.zip": 10,
 		"cassandra.zip": 10,
-		#"elasticsearch.zip": 3,
+		"elasticsearch.zip": 3,
 		"drupal6.zip": 10,
 		#"jujugui.zip": 3,
 		"memcached.zip": 10,
@@ -45,14 +45,14 @@ def getCharmProbabilities():
 		"solr.zip": 10,
 		"tomcat7.zip": 10,
 		#"websphere-libery.zip": 1,
-		#"wordpress.zip": 10,
+		"wordpress.zip": 10,
 		"zookeeper.zip": 10
 	}
 	return probs
 
 def getAllBundleRepositories():
 	bundles = {
-		"mediawikibundle": "lp:~charmers/charms/bundles/mediawiki-scalable/bundle"
+		#"mediawikibundle": "lp:~charmers/charms/bundles/mediawiki-scalable/bundle"
 	}
 	return bundles
 
@@ -87,7 +87,7 @@ def prepareNameForZip(zipName):
 	params = []
 	name = zipName.replace("./charmZips/", "")
 	name = name.replace(".zip", "")
-	params.append("precise/"+name)
+	params.append("~csqaprocess1/precise/"+name)
 
 	charmZip = zipName.replace("./", "")
 	params.append(charmZip)
@@ -109,7 +109,9 @@ def uploadAllCharms(zips, CS_URL):
 		uploadCharm(zipName, CS_URL)
 
 def getCharmArchiveSize(charmName, CS_URL):
-	r = requests.get("http://"+CS_URL+"/v4/~csqaprocess"+charmName+"/meta/archive-size")
+	url = "http://"+CS_URL+"/v4/"+charmName+"/meta/archive-size"
+	#print url
+	r = requests.get(url)
 	if(r.status_code == 200):
 		json_data = json.loads(r.content)
 		size = json_data[u'Size']
@@ -165,10 +167,10 @@ def uploadMonkeyTasks(zips, CS_URL):
 	#print probsDistribution
 	#print items
 
-	for _ in range(1):
+	for _ in range(10):
 		selected = []
 		threads = []
-		for _ in range(200):
+		for _ in range(20):
 			# select a charm
 			print "select random"
 			randZip = getRandomItem(probsDistribution, items)
@@ -184,6 +186,79 @@ def uploadMonkeyTasks(zips, CS_URL):
 
 		for thread in threads:
 			thread.join()
+
+class DownloadThread(threading.Thread):
+	def __init__(self, charmName, CS_URL, fileName):
+			super(DownloadThread, self).__init__()
+			self.charmName = charmName
+			self.csURL = CS_URL
+			self.fileName = fileName
+
+	def run(self):
+		print "starting download task for ", self.charmName
+		cmd = "http get "+self.csURL+"/v4/"+self.charmName+"/archive > "+self.fileName
+		print cmd
+		ret_code = call(cmd, shell=True)
+		return ret_code		
+
+def checkDownloadSize(downloadCounter, CS_URL):
+	errorCount = 0
+	errorList = []
+	for charm in downloadCounter.keys():
+		print charm
+		size = getCharmArchiveSize(charm+"-0", CS_URL)
+		print size
+		last = downloadCounter[charm]
+		zipFileBase = charm.replace("~csqaprocess1/precise/", "")
+		zipFileBase = "./temp/" + zipFileBase
+		for i in range(last):
+			zipFile = zipFileBase + "-" + str(i+1) + ".zip"
+			sizeOnDisk = getFileSize(zipFile)
+			if sizeOnDisk != size:
+				print zipFile + " is not properly downloaded"
+				errorCount = errorCount + 1
+				errorList.append(zipFile)
+	return errorCount, errorList
+
+
+def downloadMonkeyTasks(CS_URL):
+	probs = getCharmProbabilities()
+	probsDistribution, items = prepareProbabilityDistribution(probs)
+
+	downloadCounter = {}
+
+	for _ in range(20):
+		tasks = []
+		for _ in range(50):
+			randZip = getRandomItem(probsDistribution, items)
+			charmName = randZip.replace(".zip", "")
+			charmName = "~csqaprocess1/precise/"+charmName
+			#print charmName
+			if not charmName in downloadCounter:
+				downloadCounter[charmName] = 1
+			else:
+				downloadCounter[charmName] += 1
+			taskParams = [charmName, "./temp/"+randZip.replace(".zip","")+"-"+str(downloadCounter[charmName])+".zip"]
+			tasks.append(taskParams)
+
+		#print tasks
+		#print downloadCounter
+
+		threads = []
+		for task in tasks:
+			thread = DownloadThread(task[0], CS_URL, task[1])
+			threads.append(thread)
+
+		for thread in threads:
+			thread.start()
+
+		for thread in threads:
+			thread.join()
+
+	errorCount, errorList = checkDownloadSize(downloadCounter, CS_URL)
+	print errorList
+	print "num errors while downloading: " + str(errorCount)
+
 
 def main():
 	if len(sys.argv) < 2:
@@ -216,6 +291,8 @@ def main():
 			compareZipAndUploadedCharmSize(zips, CS_URL)
 		elif ACTION == "uploadmonkey":
 			uploadMonkeyTasks(zips, CS_URL)
+		elif ACTION == "downloadmonkey":
+			downloadMonkeyTasks(CS_URL)
 		else:
 			print "unknown command"
 			printHelp()
