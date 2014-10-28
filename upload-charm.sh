@@ -12,4 +12,3 @@ curl -ikL --data-binary @$3 \
     -H "Content-Type: application/zip" \
     http://admin:example-passwd@$1/v4/~csqaprocess1/$2/archive?hash=$sha
 echo
-cd ..
