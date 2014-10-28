@@ -9,6 +9,8 @@ import random
 import bisect
 import threading
 
+VISITED = {}
+
 def getAllCharmRepositories():
 	repos = {
 		"mediawiki": "lp:~charmers/charms/precise/mediawiki/trunk",
@@ -371,6 +373,11 @@ def validateStoreUploads(CS_URL):
 		newids = getAllRevisionsForId(csid, CS_URL)
 		#check what get on archive returns 
 		for expid in newids:
+			if expid in VISITED:
+				continue
+
+			VISITED[expid] = expid
+			
 			print "Checking ", expid
 			res = getArchiveForId(expid, CS_URL)
 			if res == -1:
